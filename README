@@ -1,0 +1,26 @@
+### SpringBoot ###
+This annotation has used to implement a Generic Service Web.
+- @RepositoryRestResource
+
+If you want to Use a Service in Controller class, you must doing annotation as @Service.
+- @Service
+
+
+## SWAGGER
+http://localhost:9091/swagger-ui/index.html
+http://localhost:9092/swagger-ui/index.html
+Find the artifact in google : OpenAPI doc...
+Example :
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>2.6.0</version>
+        </dependency>
+
+## Rest DATA :
+    - When we want to generate automatically the methods HTTP for our API, we can use Rest DATA.
+Example :
+        <!--		<dependency>
+        			<groupId>org.springframework.boot</groupId>
+        			<artifactId>spring-boot-starter-data-rest</artifactId>
+        		</dependency>-->
