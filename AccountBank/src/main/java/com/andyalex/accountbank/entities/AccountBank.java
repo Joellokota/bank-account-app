@@ -1,5 +1,6 @@
 package com.andyalex.accountbank.entities;
 
+import com.andyalex.accountbank.models.Customer;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -9,9 +10,16 @@ import lombok.*;
 @Entity
 public class AccountBank {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    @Id
+    private String id;
     private String accountNumber;
     private String bankName;
     private String accountType;
+    private double balance;
+    private double creditLimit;
+    private double debitLimit;
+    private String currency;
+    private Long customerID;
+    @Transient
+    private Customer customer;
 }

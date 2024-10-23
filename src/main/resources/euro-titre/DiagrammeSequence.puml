@@ -1,0 +1,129 @@
+@startuml
+
+
+title "Documentation fiscale étrangère"
+
+actor Client as Client
+
+box BPCE #white
+    participant "EuroTitre Client DPW" as CLIENT_DPW #lightgreen
+    participant "EuroTitre Client OIC" as CLIENT_OIC #lightgreen
+    participant "GW Partenaire BPCE-IT" as GW_PARTENAIRE #lightgreen
+    participant "ROA EuroTitre" as ROA_EURO_TITRE #lightgreen
+    participant "Widget Collect" as WIDGET_COLLECT #lightgreen
+    participant "BCOM" as BCOM #lightgreen
+    participant "BAPI_EXT_AUTH" as BAPI_EXT_AUTH #lightgreen
+    participant "DMAT" as DMAT #lightgreen
+    participant "Poste Back-Office" as POSTE_BO #lightgreen
+    participant "Backend Site Central / DEFI" as BACKEND_DEFI #lightgreen
+    participant "GW Interne BPCE-IT" as GW_INTERNE #lightgreen
+    participant "ROA MySys ou Equinoxe" as ROA_EQUI_MYS #lightgreen
+    participant "ROA EDE / GED" as ROA_EDE_GED #lightgreen
+end box
+
+autonumber 0 1 "<b><color red>[100]"
+== Achats de valeurs par le client ==
+
+Client -> CLIENT_OIC : Connection du client à son espace Bourse
+activate CLIENT_OIC
+CLIENT_OIC -> CLIENT_OIC : Achat de valeur par le client
+CLIENT_OIC -> BACKEND_DEFI
+deactivate CLIENT_OIC
+
+autonumber 0 1 "<b><color red>[200]"
+== Campagne annuelle / Batch quotidien ==
+activate BACKEND_DEFI
+BACKEND_DEFI -> BACKEND_DEFI : Traitement bacth quotidien \n Traitement campagne annuelle
+GW_PARTENAIRE <-- BACKEND_DEFI : Demande de mise à jour des documents clients \n Cas pour les valeurs hors US.
+activate GW_PARTENAIRE
+deactivate BACKEND_DEFI
+GW_PARTENAIRE -> ROA_EURO_TITRE :  Dispatch vers ROA EuroTitre
+deactivate GW_PARTENAIRE
+activate ROA_EURO_TITRE
+ROA_EURO_TITRE -> GW_INTERNE : Création d'un dossier de Collecte
+activate GW_INTERNE
+deactivate ROA_EURO_TITRE
+GW_INTERNE -> ROA_EQUI_MYS : Dispatch vers ROA Mysys ou Equinoxe
+activate ROA_EQUI_MYS
+GW_INTERNE <-- ROA_EQUI_MYS : Dossier de collecte créé / code 200
+activate BACKEND_DEFI
+deactivate ROA_EQUI_MYS
+BACKEND_DEFI <-- GW_INTERNE : Réponse suite à la création de dossier de collect
+Client <-- BACKEND_DEFI : Envoi d'un courrier au client avec le parcours pour mettre à jour les documents fiscaux.
+
+autonumber 0 1 "<b><color red>[300]"
+== Connexion client pour Uploader ==
+Client -> CLIENT_DPW : Connection du client sur son espace DPW
+activate CLIENT_DPW
+deactivate BACKEND_DEFI
+CLIENT_DPW -> CLIENT_OIC : Parcours pour transmettre les documents
+activate CLIENT_OIC
+CLIENT_OIC -> WIDGET_COLLECT : Accès au Widget d'Upload - Click sur "Transmettre"
+activate WIDGET_COLLECT
+
+deactivate CLIENT_DPW
+WIDGET_COLLECT ->  BAPI_EXT_AUTH : POST /Bapi/prepareUplaod (Prépation Upload)
+activate "BAPI_EXT_AUTH"
+BAPI_EXT_AUTH -> GW_INTERNE : Prépaation de l'Uplaod / Création d'un Toke EDE
+GW_INTERNE -> ROA_EQUI_MYS : POST /bapi/tokenrequest
+activate ROA_EQUI_MYS
+GW_INTERNE <-- ROA_EQUI_MYS : Retourne (TokenEDE)
+deactivate ROA_EQUI_MYS
+BAPI_EXT_AUTH <-- GW_INTERNE : Prépaation de l'Uplaod Ok, (TokenEDE).
+WIDGET_COLLECT <--  BAPI_EXT_AUTH
+deactivate BAPI_EXT_AUTH
+WIDGET_COLLECT ->  GW_INTERNE : POST /tools-iteration/file-transfered(TokenEDE)(file-transfered)
+GW_INTERNE ->  ROA_EDE_GED : Dispatch depuis Gateway Interne
+activate ROA_EDE_GED
+GW_INTERNE <--  ROA_EDE_GED
+deactivate ROA_EDE_GED
+WIDGET_COLLECT <--  GW_INTERNE
+WIDGET_COLLECT ->  BAPI_EXT_AUTH : POST /bapi/recordControlUpdate(TokenEDE)
+activate "BAPI_EXT_AUTH"
+BAPI_EXT_AUTH -> GW_INTERNE : Finalisation de transfert des documents
+GW_INTERNE -> ROA_EQUI_MYS : POST /bapi/recordControlUpdateRequest
+activate ROA_EQUI_MYS
+GW_INTERNE <-- ROA_EQUI_MYS : Confirmation code 200.
+deactivate ROA_EQUI_MYS
+BAPI_EXT_AUTH <-- GW_INTERNE : Réponse suite à la Finalisation de transfert
+WIDGET_COLLECT <--  BAPI_EXT_AUTH
+deactivate BAPI_EXT_AUTH
+CLIENT_OIC -> WIDGET_COLLECT : Traitement d'Upload terminé / Passage du contexte à OIC
+activate BACKEND_DEFI
+deactivate WIDGET_COLLECT
+
+CLIENT_OIC -> BACKEND_DEFI : Mettre à jour le workflow SATIS avec l'information sur le client.
+deactivate CLIENT_OIC
+POSTE_BO <-- BACKEND_DEFI : Création d'une tâche dans SATIS pour le BO
+activate POSTE_BO
+== Gestion des dossiers par le Back-Office ==
+deactivate BACKEND_DEFI
+POSTE_BO -> ROA_EURO_TITRE : Récupération de dossier de collecte depuis la GED (MySYS ou EQUINOXE)
+activate ROA_EURO_TITRE
+deactivate POSTE_BO
+ROA_EURO_TITRE -> GW_INTERNE
+GW_INTERNE -> ROA_EQUI_MYS : Demande de dossier de collecte
+activate ROA_EQUI_MYS
+GW_INTERNE <-- ROA_EQUI_MYS : Retourne le dossier de collecte
+
+ROA_EURO_TITRE <-- GW_INTERNE : Retourne le dossier de collecte
+ROA_EURO_TITRE -> POSTE_BO
+activate POSTE_BO
+ROA_EURO_TITRE <- POSTE_BO  : : Validation / Invalidation dossier de collecte ou piece
+deactivate POSTE_BO
+ROA_EURO_TITRE -> GW_INTERNE : Validation document dans la GED (MySYS ou EQUINOXE)
+
+GW_INTERNE -> ROA_EQUI_MYS : Validation ou Invalidation dossier
+GW_INTERNE <-- ROA_EQUI_MYS : Réponse Validation ou invalidation
+ROA_EURO_TITRE <-- GW_INTERNE : Validation / Invalidation éxecutée
+
+ROA_EURO_TITRE -> POSTE_BO : Notifier SATIS pour envoyer le mail au client.
+activate POSTE_BO
+deactivate ROA_EURO_TITRE
+Client <- POSTE_BO  : Envoi de mail au client suite à la validation ou invalidation
+deactivate POSTE_BO
+
+
+deactivate POSTE_BO
+deactivate BACKEND_DEFI
+@enduml

@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: CUSTOMER-SERVICE
+  datasource:
+    url: jdbc:h2:mem:db_customer
+  cloud:
+    config:
+      enabled: false
+      discovery:
+        enabled: true
+server:
+  port: 9095

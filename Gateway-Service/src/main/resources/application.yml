@@ -1,0 +1,16 @@
+spring:
+#  cloud:
+#    gateway:
+#      routes:
+#        - id : route1
+#          uri : http://localhost:9093/
+#          predicates:
+#            - Path=/list-tasks/**
+#        - id : route2
+#          uri : http://localhost:9091/
+#          predicates:
+#            - Path=/list-all-pea/**
+  application:
+    name: GATEWAY-SERVICE
+server:
+  port: 9090

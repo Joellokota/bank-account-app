@@ -1,0 +1,35 @@
+<mat-toolbar color="primary">
+  <button mat-icon-button (click)="mydrawer.toggle()"><mat-icon>menu</mat-icon></button>
+  <span style="flex: auto"></span>
+  <button mat-button routerLink="/admin/home">    Home     </button>
+  <button *ngIf="authService.roles.includes('ADMIN')" mat-button routerLink="/admin/profile">    Profile  </button>
+  <button mat-button [matMenuTriggerFor]="importItems">    Importer   </button>
+  <mat-menu #importItems>
+      <button mat-menu-item routerLink="/admin/customer">Load Customers</button>
+      <button mat-menu-item routerLink="/admin/account">Load Accounts</button>
+  </mat-menu>
+  <button mat-button *ngIf="authService.isAuthenticated">{{ authService.username}}</button>
+  <button mat-raised-button color="accent" (click)="logout()" >  Logout  </button>
+</mat-toolbar>
+
+<mat-drawer-container>
+  <mat-drawer #mydrawer  opened="true" mode="side" position="start">
+    <mat-list>
+      <mat-list-item>
+        <button mat-button routerLink="/admin/account">Accounts
+          <mat-icon>home</mat-icon>
+        </button>
+      </mat-list-item>
+      <mat-list-item>
+        <button mat-button routerLink="/admin/customer">Customers
+          <mat-icon>dashboard</mat-icon>
+        </button>
+      </mat-list-item>
+    </mat-list>
+  </mat-drawer>
+  <mat-drawer-content>
+    <div style="min-height: 600px">
+      <router-outlet></router-outlet>
+    </div>
+  </mat-drawer-content>
+</mat-drawer-container>
